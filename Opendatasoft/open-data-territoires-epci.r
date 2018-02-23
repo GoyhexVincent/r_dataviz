@@ -10,7 +10,7 @@
 
 # On nettoie l'environnement de travail et on importe les packages dont on a besoin:
 rm(list= ls())
-setwd('/home/vgoyhex/local_server/r_dataviz/Opendata')
+setwd('/home/vgoyhex/local_server/r_dataviz/Opendatasoft')
 getwd()
 list.files()
 library(dplyr)
@@ -54,3 +54,24 @@ list.files() #On reliste les fichiers présents dans le working directory.
 ################################
 # ETAPE 2: ANALYSE DES DONNEES #
 ################################
+couverture_telecom <- read.csv2("couverture-2g-3g-4g-en-france-par-operateur-juillet-2015.csv", header=T, sep=";")
+head(couverture_telecom)
+g4 <-filter(couverture_telecom, operateur=="Tout Opérateur", var2 =="population 4G")
+g4 <- g4[,c("operateur","var2","couverture", "nom_commune", "code_insee", "population_commune")]
+
+
+# Est ce que ça vaut le coup d'aller plus bas et de regarder directement une commune en particulier?
+hasparren <- filter(couverture_telecom, nom_commune=="HASPARREN")
+
+
+
+#################################################
+# ETAPE 3: SUPPRESSION DES FICHIERS TELECHARGES #
+#################################################
+# directory_files <-list.files()
+# value = "README"
+# for (file in directory_files) {
+#   if (grepl (value, file) = TRUE){
+#     file.remove(file)
+#   }
+# }
