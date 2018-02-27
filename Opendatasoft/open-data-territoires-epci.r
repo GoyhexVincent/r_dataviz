@@ -83,12 +83,20 @@ shape.df <- as(shape, "data.frame")
 
 proj4string(shape) # WGS84.
 commune_pays_basque <- subset(shape, shape$insee %in% liste)
-commune_pays_basque <- fortify(commune_pays_basque)
+#On va merger l'info couverture 4g avec les polygones des communes du pays basque
+commune_pays_basque <- merge(commune_pays_basque, g4, by.x="insee", by.y="code_insee") 
+
+commune_pays_basque.for <- fortify(commune_pays_basque)
+commune_pays_basque.for <- join(commune_pays_basque.for, commune_pays_basque@data, by = "id")
+
+########################################
+# ETAPE 4: VISUALISATION DE LA DONNEE  #
+########################################
 
 map <- ggplot()+
   geom_polygon(data = commune_pays_basque, 
-            aes(x = long, y = lat, group = group),
-            color = 'gray', fill = 'black', size = .2)
+            aes(x = long, y = lat, fill = couverture, group = group),
+            color = 'gray', size = .2)
 print(map)
 map_projected <- map +
   coord_map()
