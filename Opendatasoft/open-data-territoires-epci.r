@@ -4,6 +4,9 @@
 #Remise en forme en R.
 #Utilisons opendatasoft pour générer un Webcrawler qui ira pomper toute la donnée OPENDATA d'un territoire donné:
 
+install.packages("maptools")
+install.packages("ggplot2")
+install.packages("rgdal")
 #######################
 # ETAPE 0: NETTOYAGE: #
 #######################
@@ -14,6 +17,8 @@ setwd('/home/vgoyhex/local_server/r_dataviz/Opendatasoft')
 getwd()
 list.files()
 library(dplyr)
+library(rgdal)
+library (ggplot2)
 
 
 #####################################
@@ -51,18 +56,47 @@ download.file(URL, destfile = paste(value,".csv", sep=""), method="auto")
 }
 list.files() #On reliste les fichiers présents dans le working directory.
 
+#Enfin, il nous faut récuperer le fond de carte de toutes les communes de france (overkilll) pour pouvoir
+#faire des visualisations intéressantes de la donnée.
+#https://www.data.gouv.fr/fr/datasets/decoupage-administratif-communal-francais-issu-d-openstreetmap/
+#Puisque la ressource était assez lourde, j'ai pris la liberté de la télécharger hors du process, je vais l'importer direct depuis mon dépot.
+
+
 ################################
 # ETAPE 2: ANALYSE DES DONNEES #
 ################################
+
+
 couverture_telecom <- read.csv2("couverture-2g-3g-4g-en-france-par-operateur-juillet-2015.csv", header=T, sep=";")
 head(couverture_telecom)
-g4 <-filter(couverture_telecom, operateur=="Tout Opérateur", var2 =="population 4G")
+g4 <-filter(couverture_telecom, operateur=="Tout Opérateur", var2 =="population 4G", code_departement=="64")
 g4 <- g4[,c("operateur","var2","couverture", "nom_commune", "code_insee", "population_commune")]
 
 
+liste <- unique(g4[,c("code_insee")])
+typeof(liste)
+
+#https://www.data.gouv.fr/fr/datasets/decoupage-administratif-communal-francais-issu-d-openstreetmap/#_
+#On récupère la derniere version à jour des communes française, depuis Openstreetmap.
+shape <- readOGR(dsn = ".", layer = "communes-20180101")
+shape.df <- as(shape, "data.frame")
+
+proj4string(shape) # WGS84.
+commune_pays_basque <- subset(shape, shape$insee %in% liste)
+commune_pays_basque <- fortify(commune_pays_basque)
+
+map <- ggplot()+
+  geom_polygon(data = commune_pays_basque, 
+            aes(x = long, y = lat, group = group),
+            color = 'gray', fill = 'black', size = .2)
+print(map)
+map_projected <- map +
+  coord_map()
+
+print(map_projected)
+
 # Est ce que ça vaut le coup d'aller plus bas et de regarder directement une commune en particulier?
 hasparren <- filter(couverture_telecom, nom_commune=="HASPARREN")
-
 
 
 #################################################
@@ -75,3 +109,4 @@ hasparren <- filter(couverture_telecom, nom_commune=="HASPARREN")
 #     file.remove(file)
 #   }
 # }
+
