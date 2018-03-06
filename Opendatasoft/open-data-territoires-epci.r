@@ -19,6 +19,9 @@ list.files()
 library(dplyr)
 library(rgdal)
 library (ggplot2)
+library(plyr)
+library(sf)
+library (cartography)
 
 
 #####################################
@@ -86,15 +89,18 @@ commune_pays_basque <- subset(shape, shape$insee %in% liste)
 #On va merger l'info couverture 4g avec les polygones des communes du pays basque
 commune_pays_basque <- merge(commune_pays_basque, g4, by.x="insee", by.y="code_insee") 
 
-commune_pays_basque.for <- fortify(commune_pays_basque)
-commune_pays_basque.for <- join(commune_pays_basque.for, commune_pays_basque@data, by = "id")
+commune_pays_basque.for <- fortify(commune_pays_basque, region="nom_commune")
+# On renomme les champs pour pouvoir faire une jointure ensuite.
+colnames(commune_pays_basque.for) <- c('long','lat','order','hole','piece','nom_commune','group') 
+commune_pays_basque.for = plyr::join(x = commune_pays_basque.for,y = commune_pays_basque@data) # Jointure par ID
+
 
 ########################################
 # ETAPE 4: VISUALISATION DE LA DONNEE  #
 ########################################
 
 map <- ggplot()+
-  geom_polygon(data = commune_pays_basque, 
+  geom_polygon(data = commune_pays_basque.for, 
             aes(x = long, y = lat, fill = couverture, group = group),
             color = 'gray', size = .2)
 print(map)
