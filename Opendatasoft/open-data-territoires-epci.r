@@ -72,7 +72,7 @@ list.files() #On reliste les fichiers présents dans le working directory.
 
 couverture_telecom <- read.csv2("couverture-2g-3g-4g-en-france-par-operateur-juillet-2015.csv", header=T, sep=";")
 head(couverture_telecom)
-g4 <-filter(couverture_telecom, operateur=="Tout Opérateur", var2 =="population 4G", code_departement=="64")
+g4 <-filter(couverture_telecom, operateur=="Tout Opérateur", var2 =="population 4G", code_departement=="64", couverture!="0.0")
 g4 <- g4[,c("operateur","var2","couverture", "nom_commune", "code_insee", "population_commune")]
 
 
@@ -93,19 +93,64 @@ commune_pays_basque.for <- fortify(commune_pays_basque, region="nom_commune")
 # On renomme les champs pour pouvoir faire une jointure ensuite.
 colnames(commune_pays_basque.for) <- c('long','lat','order','hole','piece','nom_commune','group') 
 commune_pays_basque.for = plyr::join(x = commune_pays_basque.for,y = commune_pays_basque@data) # Jointure par ID
-
+commune_pays_basque.for$couverture <- as.numeric(as.character(commune_pays_basque.for$couverture))
 
 ########################################
 # ETAPE 4: VISUALISATION DE LA DONNEE  #
 ########################################
 
+#Merci à TimoGrossenbacher pour son thème plutôt efficace:
+#https://timogrossenbacher.ch/2016/12/beautiful-thematic-maps-with-ggplot2-only/
+
+theme_map <- function(...) {
+  theme_minimal() +
+    theme(
+      text = element_text(family = "Ubuntu Regular", color = "#22211d"),
+      axis.line = element_blank(),
+      axis.text.x = element_blank(),
+      axis.text.y = element_blank(),
+      axis.ticks = element_blank(),
+      axis.title.x = element_blank(),
+      axis.title.y = element_blank(),
+      # panel.grid.minor = element_line(color = "#ebebe5", size = 0.2),
+      panel.grid.major = element_line(color = "#ebebe5", size = 0.2),
+      panel.grid.minor = element_blank(),
+      plot.background = element_rect(fill = "#f5f5f2", color = NA), 
+      panel.background = element_rect(fill = "#f5f5f2", color = NA), 
+      legend.background = element_rect(fill = "#f5f5f2", color = NA),
+      panel.border = element_blank(),
+      ...
+    )
+}
+
+
 map <- ggplot()+
   geom_polygon(data = commune_pays_basque.for, 
             aes(x = long, y = lat, fill = couverture, group = group),
-            color = 'gray', size = .2)
+            color = 'gray', size = .2)+
+  scale_colour_gradient(low = "white", high = "black")+
+  geom_path(data = commune_pays_basque.for,
+            aes(x = long, y = lat, group = group), 
+            color = "white", size = 0.1) +
+  coord_equal() +
+  # add the previously defined basic theme
+  theme_map() +
+  labs(x = NULL, 
+       y = NULL, 
+       title = "Couverture 4g au Pays basque (Fr)", 
+       subtitle = "2014", # à verifier
+       caption = "Source: Opendatasoft (à corriger)")
+
 print(map)
 map_projected <- map +
   coord_map()
+
+
+
+
+
+
+
 
 print(map_projected)
 
