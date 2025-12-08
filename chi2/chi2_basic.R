@@ -51,3 +51,26 @@ print(round(expected_counts, 2))
 
 pearson_residuals <- chi_square_test$residuals
 print(round(pearson_residuals, 2))
+
+# Calculate contribution to chi-square statistic
+contributions <- (observed_counts - expected_counts)^2 / expected_counts
+
+# Calculate percentage contributions
+total_chi_square <- chi_square_test$statistic
+percentage_contributions <- 100 * contributions / total_chi_square
+
+# Print percentage contributions
+print("Percentage Contributions:")
+print(round(percentage_contributions, 2))
+
+
+# Install and load heatmap package
+install.packages("pheatmap")
+library("pheatmap")
+
+# Create heatmap for percentage contributions
+pheatmap(percentage_contributions,
+         display_numbers = TRUE,
+         cluster_rows = FALSE,
+         cluster_cols = FALSE,
+         main = "Percentage Contribution to Chi-Square Statistic")
